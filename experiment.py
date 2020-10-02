@@ -3,11 +3,12 @@ from data_loader import DataLoader
 import pandas as pd
 from sklearn import tree
 import numpy as np
-import time
+from datetime import datetime
+
 
 class Experiment:
     def __init__(self):
-        self.exp_id = time.localtime
+        self.exp_id = datetime.now()
 
     def start(self):
         dataset = DataLoader(dataset_name = 'german_credit', target_col_name = 'class')
@@ -15,7 +16,7 @@ class Experiment:
         classifier = tree.DecisionTreeClassifier()
         t_training = TriTraining(classifier)
         t_training.fit(L_X, L_y, U_X)
-        res = t_training.predict(X_test)
+        self.res = t_training.predict(X_test)
         self.evaluation = t_training.score(X_test, y_test)
     
     def export_results(self):
