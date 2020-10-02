@@ -2,7 +2,7 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import train_test_split
 
-class DataLoader:
+class DataHandler:
     def __init__(self, dataset_name, target_col_name):
         self.dataset = pd.read_csv('./datasets/{}.csv'.format(dataset_name))
         self.original_dataset = self.dataset # keep the original dataset

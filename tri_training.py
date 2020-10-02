@@ -7,7 +7,7 @@ class TriTraining:
     def __init__(self, classifier, is_extract_meta_features = False, is_use_meta_model = False):
         self.is_extract_meta_features = is_extract_meta_features
         self.is_use_meta_model = is_use_meta_model
-        
+
         if sklearn.base.is_classifier(classifier):
             self.classifiers = [sklearn.base.clone(classifier) for i in range(3)]
         else:
@@ -34,6 +34,7 @@ class TriTraining:
         self.iter = 0
         
         while improve:
+            print("Iteration: {}".format(self.iter))
             self.iter += 1
             for i in range(3):
                 X_pseudo_label_index_current[i] = X_pseudo_label_index[i]
@@ -58,6 +59,12 @@ class TriTraining:
                     y_pseudo_label[i] = U_y_j[U_y_j == U_y_k]
                     X_pseudo_label_index[i] = np.where(U_y_j==U_y_k)
                     pseudo_label_size[i] = len(X_pseudo_label_index[i])
+                    
+                    # Get meta features
+                    if self.is_extract_meta_features:
+                        self.meta_features_extractor.view_based_mf(self.iter, U_y_j, U_y_k, X_pseudo_label, y_pseudo_label)
+
+                    # Continue tri-training flow
                     if pseudo_label_size_current[i] == 0: # first updated
                         pseudo_label_size_current[i]  = int(classification_error[i]/(classification_error_current[i] - classification_error[i]) + 1)
                     if pseudo_label_size_current[i] < pseudo_label_size[i]:
@@ -93,3 +100,6 @@ class TriTraining:
         k_pred = self.classifiers[k].predict(X)
         wrong_index =np.logical_and(j_pred != y, k_pred==j_pred)
         return sum(wrong_index)/sum(j_pred == k_pred)
+
+    def set_meta_features_extractor(self, mf_extractor):
+        self.meta_features_extractor = mf_extractor
