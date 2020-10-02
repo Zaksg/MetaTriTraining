@@ -17,8 +17,6 @@ class DataLoader:
             self.label = self.dataset[:,-1]
 
         
-
-
     def data_split(self, label_rate, test_rate=0.25):
         self.test_rate = test_rate
         self.label_rate = label_rate
