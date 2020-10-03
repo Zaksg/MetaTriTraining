@@ -20,14 +20,14 @@ class DataHandler:
     def data_split(self, label_rate, test_rate=0.25):
         self.test_rate = test_rate
         self.label_rate = label_rate
-        X_train, X_test, y_train, y_test = train_test_split(self.data, self.label, test_size = self.test_rate, random_state=0)
+        self.X_train, self.X_test, self.y_train, self.y_test = train_test_split(self.data, self.label, test_size = self.test_rate, random_state=0)
         rng = np.random.RandomState(42)
-        self.labeled_index = rng.rand(len(y_train)) < self.label_rate
+        self.labeled_index = rng.rand(len(self.y_train)) < self.label_rate
         self.unlabeled_index = np.logical_not(self.labeled_index)
-        self.L_X = X_train[self.labeled_index]#data of L
-        self.L_y = y_train[self.labeled_index]#lable of L
-        self.U_X = X_train[self.unlabeled_index]#data of U
-        return self.L_X, self.L_y, self.U_X, X_test, y_test
+        self.L_X = self.X_train[self.labeled_index]#data of L
+        self.L_y = self.y_train[self.labeled_index]#lable of L
+        self.U_X = self.X_train[self.unlabeled_index]#data of U
+        return self.L_X, self.L_y, self.U_X, self.X_test, self.y_test
 
     def handle_categorical_data(self):
         self.numeric_cols = self.dataset._get_numeric_data().columns

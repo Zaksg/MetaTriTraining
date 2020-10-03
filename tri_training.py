@@ -52,7 +52,8 @@ class TriTraining:
                 j, k = np.delete(np.array([0,1,2]),i)
                 update[i] = False
                 classification_error[i] = self.measure_error(self.X_label, self.y_label, j, k)
-                if classification_error[i] < classification_error_current[i]:
+                # ToDo: change stop criteria
+                if classification_error[i] < classification_error_current[i] or self.iter <= 3:
                     U_y_j = self.classifiers[j].predict(X_unlabel)
                     U_y_k = self.classifiers[k].predict(X_unlabel)
                     U_y_i = self.classifiers[i].predict(X_unlabel)
@@ -66,7 +67,7 @@ class TriTraining:
                         U_y_j_proba = self.classifiers[j].predict_proba(X_unlabel)
                         U_y_k_proba = self.classifiers[k].predict_proba(X_unlabel)
                         U_y_i_proba = self.classifiers[i].predict_proba(X_unlabel)
-                        self.meta_features_extractor.view_based_mf(self.iter, i, U_y_j, U_y_k, U_y_i, X_pseudo_label, y_pseudo_label, 
+                        self.meta_features_extractor.view_based_mf(self.iter, i, U_y_j, U_y_k, U_y_i, X_pseudo_label[i], y_pseudo_label[i], 
                             U_y_j_proba, U_y_k_proba, U_y_i_proba)
 
                     # Continue tri-training flow
