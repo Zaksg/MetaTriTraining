@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 class DataHandler:
-    def __init__(self, dataset_name, target_col_name):
+    def __init__(self, target_col_name = None, dataset_name = 'german_credit'):
         self.dataset = pd.read_csv('./datasets/{}.csv'.format(dataset_name))
         self.original_dataset = self.dataset # keep the original dataset
         
@@ -13,8 +13,8 @@ class DataHandler:
             self.data = self.dataset.drop([target_col_name], axis=1)
             self.label = self.dataset[target_col_name]
         else:
-            self.data = self.dataset[:, :-1]
-            self.label = self.dataset[:,-1]
+            self.data = self.dataset[self.dataset.columns[:-1]]
+            self.label = self.dataset[self.dataset.columns[-1]]
 
         
     def data_split(self, label_rate, test_rate=0.25):

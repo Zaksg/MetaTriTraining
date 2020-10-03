@@ -17,7 +17,8 @@ class Experiment:
         self.label_rate = label_rate
 
     def start(self):
-        dataset = DataHandler(dataset_name = 'german_credit', target_col_name = 'class')
+        # 'phoneme','german_credit'
+        dataset = DataHandler(dataset_name = 'phoneme') # , target_col_name = 'Class'
         L_X, L_y, U_X, X_test, y_test = dataset.data_split(label_rate=self.label_rate, test_rate=0.25)
         
         classifier = Classifier('logistic_regression')
