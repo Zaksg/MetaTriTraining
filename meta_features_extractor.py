@@ -6,11 +6,13 @@ class MetaFeaturesExtracion:
         self.instance_based_meta_features = dict()
         self.dataset_based_meta_features = dict()
 
-    def view_based_mf(self, iteration, view_1_presictions, view_2_presictions, X_pseudo_label, y_pseudo_label):
+    def view_based_mf(self, iteration, classifier_number, view_j_presictions, view_k_presictions, view_i_presictions, X_pseudo_label, y_pseudo_label 
+        , view_j_presictions_proba, view_k_presictions_proba, view_i_presictions_proba):
+        
         view_based_meta_features_current = dict()
 
-        view_based_meta_features_current['avg_confidence_view_1'] = np.mean(view_1_presictions)
-        view_based_meta_features_current['avg_confidence_view_2'] = np.mean(view_2_presictions)
+        view_based_meta_features_current['avg_confidence_view_j_classifier_{}'.format(classifier_number)] = np.mean(view_j_presictions_proba[:,1])
+        view_based_meta_features_current['avg_confidence_view_k_classifier_{}'.format(classifier_number)] = np.mean(view_k_presictions_proba[:,1])
 
         self.view_based_meta_features[iteration] = view_based_meta_features_current
 

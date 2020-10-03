@@ -55,14 +55,19 @@ class TriTraining:
                 if classification_error[i] < classification_error_current[i]:
                     U_y_j = self.classifiers[j].predict(X_unlabel)
                     U_y_k = self.classifiers[k].predict(X_unlabel)
+                    U_y_i = self.classifiers[i].predict(X_unlabel)
                     X_pseudo_label[i] = X_unlabel[U_y_j == U_y_k] # models agreement
                     y_pseudo_label[i] = U_y_j[U_y_j == U_y_k]
-                    X_pseudo_label_index[i] = np.where(U_y_j==U_y_k)
-                    pseudo_label_size[i] = len(X_pseudo_label_index[i])
+                    # X_pseudo_label_index[i] = np.where(U_y_j==U_y_k)
+                    pseudo_label_size[i] = len(y_pseudo_label[i])
                     
                     # Get meta features
                     if self.is_extract_meta_features:
-                        self.meta_features_extractor.view_based_mf(self.iter, U_y_j, U_y_k, X_pseudo_label, y_pseudo_label)
+                        U_y_j_proba = self.classifiers[j].predict_proba(X_unlabel)
+                        U_y_k_proba = self.classifiers[k].predict_proba(X_unlabel)
+                        U_y_i_proba = self.classifiers[i].predict_proba(X_unlabel)
+                        self.meta_features_extractor.view_based_mf(self.iter, i, U_y_j, U_y_k, U_y_i, X_pseudo_label, y_pseudo_label, 
+                            U_y_j_proba, U_y_k_proba, U_y_i_proba)
 
                     # Continue tri-training flow
                     if pseudo_label_size_current[i] == 0: # first updated
@@ -72,14 +77,14 @@ class TriTraining:
                             update[i] = True
                         elif pseudo_label_size_current[i] > classification_error[i]/(classification_error_current[i] - classification_error[i]):
                             resample_size = math.ceil(classification_error_current[i] * pseudo_label_size_current[i] / classification_error[i] - 1)
-                            X_pseudo_label_index[i], y_pseudo_label[i] = sklearn.utils.resample(X_pseudo_label_index[i],y_pseudo_label[i],replace=False,n_samples=resample_size)
-                            pseudo_label_size[i] = len(X_pseudo_label_index[i])
+                            X_pseudo_label[i], y_pseudo_label[i] = sklearn.utils.resample(
+                                X_pseudo_label[i],y_pseudo_label[i],replace=False,n_samples=resample_size)
+                            pseudo_label_size[i] = len(y_pseudo_label[i])
                             update[i] = True
              
             for i in range(3):
                 if update[i]:
-                    X_pseudo_label[i] = np.array(X_unlabel[X_pseudo_label_index[i]])
-                    self.classifiers[i].fit(np.concatenate((X_pseudo_label[i], self.X_label), axis=0),np.concatenate((np.array(y_pseudo_label[i]), self.y_label), axis=0))
+                    self.classifiers[i].fit(np.append(self.X_label,X_pseudo_label[i],axis=0), np.append(self.y_label, y_pseudo_label[i], axis=0))
                     classification_error_current[i] = classification_error[i]
                     pseudo_label_size_current[i] = pseudo_label_size[i]
     

@@ -2,6 +2,7 @@ from tri_training import TriTraining
 from data_handler import DataHandler
 import pandas as pd
 from sklearn import tree
+from sklearn.linear_model import LogisticRegression
 import numpy as np
 from datetime import datetime
 from meta_features_extractor import MetaFeaturesExtracion
@@ -18,7 +19,8 @@ class Experiment:
         dataset = DataHandler(dataset_name = 'german_credit', target_col_name = 'class')
         L_X, L_y, U_X, X_test, y_test = dataset.data_split(label_rate=self.label_rate, test_rate=0.25)
         
-        classifier = tree.DecisionTreeClassifier()
+        # classifier = tree.DecisionTreeClassifier()
+        classifier = LogisticRegression()
         t_training = TriTraining(classifier, self.is_extract_meta_features, self.is_use_meta_model)
 
         if self.is_extract_meta_features:
