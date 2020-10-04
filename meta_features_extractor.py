@@ -94,6 +94,10 @@ class MetaFeaturesExtracion:
         temp_classifier.fit(dataset.L_X, dataset.L_y)
         self.dataset_based_meta_features['initial_auc'] = accuracy_score(dataset.y_test, temp_classifier.predict(dataset.X_test))
 
+        # Mean skewness of numeric attributes
+
+        # Classes ratio (test set)
+
 
 
     def descriptive_statistics(self, feature_name_prefix, numbers_list):

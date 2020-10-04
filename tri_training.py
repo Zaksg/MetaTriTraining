@@ -61,12 +61,17 @@ class TriTraining:
                     y_pseudo_label[i] = U_y_j[U_y_j == U_y_k]
                     # X_pseudo_label_index[i] = np.where(U_y_j==U_y_k)
                     pseudo_label_size[i] = len(y_pseudo_label[i])
-                    
+
+                    # Confidence score
+                    U_y_j_proba = self.classifiers[j].predict_proba(X_unlabel)
+                    U_y_k_proba = self.classifiers[k].predict_proba(X_unlabel)
+                    U_y_i_proba = self.classifiers[i].predict_proba(X_unlabel)
+
+                    ### Generate pseudo-label candidates
+                    self.generate_labeling_candidates(U_y_j_proba, U_y_k_proba, y_pseudo_label[i])
+
                     # Get meta features
                     if self.is_extract_meta_features:
-                        U_y_j_proba = self.classifiers[j].predict_proba(X_unlabel)
-                        U_y_k_proba = self.classifiers[k].predict_proba(X_unlabel)
-                        U_y_i_proba = self.classifiers[i].predict_proba(X_unlabel)
                         self.meta_features_extractor.view_based_mf(self.iter, i, U_y_j, U_y_k, U_y_i, X_pseudo_label[i], y_pseudo_label[i], 
                             U_y_j_proba, U_y_k_proba, U_y_i_proba)
 
@@ -109,3 +114,22 @@ class TriTraining:
 
     def set_meta_features_extractor(self, mf_extractor):
         self.meta_features_extractor = mf_extractor
+
+    def top_confidence(self, confidence_list):
+        class_1_conf = confidence_list[:,1]
+        
+        # top 10% - 5% from each class
+        condidates_per_class = int(len(class_1_conf) * 0.05)
+        top_class_0 = np.argsort(class_1_conf)[:condidates_per_class]
+        top_class_1 = np.argsort(class_1_conf)[-condidates_per_class:]
+        return top_class_0, top_class_1
+
+    def generate_labeling_candidates(self, confidence_list_j, confidence_list_k, agree_list):
+        candidates = []
+        
+        # Get instances with highest labeling confidence
+        candidates_j_class_0, candidates_j_class_1 = self.top_confidence(confidence_list_j)
+        candidates_k_class_0, candidates_k_class_1 = self.top_confidence(confidence_list_k)
+        agree_class_0, agree_class_1 = np.where(agree_list==0), np.where(agree_list==1)
+
+        return candidates

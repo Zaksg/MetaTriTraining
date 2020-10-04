@@ -15,6 +15,7 @@ class DataHandler:
         else:
             self.data = self.dataset[self.dataset.columns[:-1]]
             self.label = self.dataset[self.dataset.columns[-1]]
+        self.label_encode()
 
         
     def data_split(self, label_rate, test_rate=0.25):
@@ -35,3 +36,7 @@ class DataHandler:
         for cat_col in self.categorical_cols:
             self.dataset[cat_col] = self.dataset[cat_col].astype('category')
         self.dataset[self.categorical_cols] = self.dataset[self.categorical_cols].apply(lambda x: x.cat.codes)
+
+    def label_encode(self):
+        unique_vals = self.label.unique()
+        self.label = self.label.map({unique_vals[0] : 0, unique_vals[1] : 1})
