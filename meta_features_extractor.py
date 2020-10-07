@@ -73,7 +73,7 @@ class MetaFeaturesExtracion:
             self.view_based_meta_features[iteration].update(view_based_meta_features_current)
 
 
-    def instance_based_mf(self, iteration):
+    def instance_based_mf(self, iteration, batches):
         pass
 
     def dataset_based_mf(self, dataset, classifier):
