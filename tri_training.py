@@ -26,9 +26,9 @@ class TriTraining:
         self.model_type = model_type
 
         if sklearn.base.is_classifier(classifier):
-            self.classifiers = [sklearn.base.clone(classifier) for i in range(3)]
+            self.classifiers = [sklearn.base.clone(classifier) for i in range(Config.NUM_CLASSIFIERS)]
         else:
-            self.classifiers = [sklearn.base.clone(classifier[i]) for i in range(3)]
+            self.classifiers = [sklearn.base.clone(classifier[i]) for i in range(Config.NUM_CLASSIFIERS)]
             
     def fit(self, dataset):
         X_label, y_label, X_unlabel, X_test, y_test = dataset.L_X, dataset.L_y, dataset.U_X, dataset.X_test, dataset.y_test
@@ -38,40 +38,40 @@ class TriTraining:
 
         # BootstrapSample
         views_samples = []
-        for i in range(3):
+        for i in range(Config.NUM_CLASSIFIERS):
             sample = sklearn.utils.resample(self.X_label, self.y_label, n_samples=int(Config.RESAMPLE_LABELED_RATIO*len(self.y_label))
                 , random_state=Config.RANDOM_STATE)
             views_samples.append(sample)
             self.classifiers[i].fit(*sample)
 
         # Initial variables 
-        classification_error_current = [0.5]*3
-        pseudo_label_size_current = [0]*3
-        classification_error = [0]*3
-        pseudo_label_size = [0]*3
-        X_pseudo_label_index = [[]]*3
-        X_pseudo_label_index_current = [[]]*3
-        update = [False]*3
+        classification_error_current = [0.5]*Config.NUM_CLASSIFIERS
+        pseudo_label_size_current = [0]*Config.NUM_CLASSIFIERS
+        classification_error = [0]*Config.NUM_CLASSIFIERS
+        pseudo_label_size = [0]*Config.NUM_CLASSIFIERS
+        X_pseudo_label_index = [[]]*Config.NUM_CLASSIFIERS
+        X_pseudo_label_index_current = [[]]*Config.NUM_CLASSIFIERS
+        update = [False]*Config.NUM_CLASSIFIERS
         improve = True
-        self.iter = 0
+        self.iter = -1
         
         while improve:
             self.iter += 1
             # Test set evaluation
-            print ("Test set score for iteration {} is: {}".format(self.iter, self.score(X_test, y_test)))
-            for i in range(3):
+            # print ("Test set score for iteration {} is: {}".format(self.iter, self.score(X_test, y_test)))
+            for i in range(Config.NUM_CLASSIFIERS):
                 X_pseudo_label_index_current[i] = X_pseudo_label_index[i]
 
             # The new pseudo label set determined by tri-training iteration for classifier i
             # X_pseudo_label_index, contains the data record index (in the full unlabelled set) of the new pseudo label set determined by tri-training iteration for classifier i
             # X_pseudo_label, contains the features for new pseudo label set determined by tri-training iteration for classifier i
             # y_pseudo_label, contains the labels (not ground truth label, but pseudo label calculated by tri-training iteration) for new pseudo label set determined by tri-training iteration for classifier i
-            X_pseudo_label_index = [[]]*3
-            X_pseudo_label = [[]]*3
-            y_pseudo_label = [[]]*3
+            X_pseudo_label_index = [[]]*Config.NUM_CLASSIFIERS
+            X_pseudo_label = [[]]*Config.NUM_CLASSIFIERS
+            y_pseudo_label = [[]]*Config.NUM_CLASSIFIERS
             
             # Loop unlabeled set
-            for i in range(3):    
+            for i in range(Config.NUM_CLASSIFIERS):    
                 j, k = np.delete(np.array([0,1,2]),i)
                 update[i] = False
                 classification_error[i] = self.measure_error(self.X_label, self.y_label, j, k)
@@ -79,7 +79,7 @@ class TriTraining:
                 if self.model_type == 'original':
                     stop_criteria = classification_error[i] < classification_error_current[i]
                 else:
-                    stop_criteria = self.iter <= Config.MAX_ITERATIONS
+                    stop_criteria = self.iter < Config.MAX_ITERATIONS
 
                 if stop_criteria:
                     U_y_j = self.classifiers[j].predict(X_unlabel)
@@ -117,7 +117,7 @@ class TriTraining:
                     else:
                         ### Generate pseudo-label candidates
                         generated_batches = self.generate_labeling_candidates(U_y_j_proba, U_y_k_proba, y_pseudo_label[i], batch_size=Config.BATCH_SIZE)
-                        self.meta_features_extractor.instance_based_mf(self.iter, generated_batches)
+                        self.meta_features_extractor.instance_based_mf(self.iter, i, generated_batches, X_unlabel, U_y_j_proba, U_y_k_proba, U_y_i_proba)
                     
                         # Batch selection
                         if self.model_type == 'batch':
@@ -132,7 +132,7 @@ class TriTraining:
                         update[i] = True
 
              
-            for i in range(3):
+            for i in range(Config.NUM_CLASSIFIERS):
                 if update[i]:
                     self.classifiers[i].fit(np.append(self.X_label,X_pseudo_label[i],axis=0), np.append(self.y_label, y_pseudo_label[i], axis=0))
                     classification_error_current[i] = classification_error[i]
@@ -143,7 +143,7 @@ class TriTraining:
 
 
     def predict(self, X):
-        pred = np.asarray([self.classifiers[i].predict(X) for i in range(3)])
+        pred = np.asarray([self.classifiers[i].predict(X) for i in range(Config.NUM_CLASSIFIERS)])
         pred[0][pred[1]==pred[2]] = pred[1][pred[1]==pred[2]]
         return pred[0]
         
@@ -210,4 +210,4 @@ class TriTraining:
         if len(agree_candidates)> 0:
             candidates = agree_candidates + candidates
 
-        return candidates
+        return np.asarray(candidates)

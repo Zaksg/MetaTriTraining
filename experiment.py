@@ -15,9 +15,11 @@ class Experiment:
         self.is_extract_meta_features = True
         self.model_type = Config.MODEL_TYPE
         self.label_rate = label_rate
+        self.exp_results = {}
 
-    def start(self):
-        dataset = DataHandler(dataset_name = Config.DATASET_NAME)
+    def start(self, ds = Config.DATASET_NAME):
+        self.dataset_name = ds
+        dataset = DataHandler(dataset_name = ds)
         L_X, L_y, U_X, X_test, y_test = dataset.data_split(label_rate=self.label_rate, test_rate=Config.TEST_RATE)
         
         classifier = Classifier(Config.CLASSIFIER)
@@ -33,7 +35,27 @@ class Experiment:
         self.evaluation = t_training.score(X_test, y_test)
     
     def export_results(self):
-        print(self.evaluation)
+        self.exp_results[self.dataset_name] = self.evaluation
+        print("Accuracy for dataset {}: {}".format(self.dataset_name, self.evaluation))
 
     def export_meta_features(self):
-        return self.meta_features
+        # meta_dataset = pd.DataFrame()
+        list_meta_features = []
+        for iteration in range(Config.MAX_ITERATIONS):
+            for view in range(Config.NUM_CLASSIFIERS):
+                for batch in range(Config.NUM_BATCHES):
+                    temp_dict = {}
+                    # additional data
+                    temp_dict['dataset'] = self.dataset_name
+                    temp_dict['iteration'] = iteration
+                    temp_dict['view'] = view
+                    temp_dict['exp_id'] = self.exp_id
+                    temp_dict['label_rate'] = self.label_rate
+                    # add meta features
+                    temp_dict.update(self.meta_features.instance_based_meta_features[iteration][view][batch])
+                    temp_dict.update(self.meta_features.view_based_meta_features[iteration][view])
+                    temp_dict.update(self.meta_features.dataset_based_meta_features)
+                    list_meta_features.append(temp_dict)
+        meta_dataset = pd.DataFrame.from_dict(list_meta_features)
+        meta_dataset.to_csv('./meta_datasets/{}_meta_features.csv'.format(self.dataset_name))
+        return self.meta_features, meta_dataset
